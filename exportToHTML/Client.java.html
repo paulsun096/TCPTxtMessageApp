@@ -1,0 +1,154 @@
+<html>
+<head>
+<title>Client.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.ln { color: #606366; font-weight: normal; font-style: normal; }
+.s0 { color: rgb(204,120,50); }
+.s1 { color: rgb(169,183,198); }
+.s2 { color: rgb(106,135,89); }
+.s3 { color: rgb(128,128,128); }
+.s4 { color: rgb(104,151,187); }
+</style>
+</head>
+<BODY BGCOLOR="#2b2b2b">
+<TABLE CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<TR><TD><CENTER>
+<FONT FACE="Arial, Helvetica" COLOR="#000000">
+Client.java</FONT>
+</center></TD></TR></TABLE>
+<pre>
+<span class="s0">import </span><span class="s1">java.io.*</span><span class="s0">;</span><span class="s1"> 
+</span><span class="s0">import </span><span class="s1">java.net.*</span><span class="s0">;</span><span class="s1"> 
+</span><span class="s0">import </span><span class="s1">java.awt.*</span><span class="s0">;</span><span class="s1"> 
+</span><span class="s0">import </span><span class="s1">java.awt.event.*</span><span class="s0">;</span><span class="s1"> 
+</span><span class="s0">import </span><span class="s1">javax.swing.*</span><span class="s0">;</span><span class="s1"> 
+  
+  
+@SuppressWarnings(</span><span class="s2">&quot;serial&quot;</span><span class="s1">) 
+</span><span class="s0">public class </span><span class="s1">Client </span><span class="s0">extends </span><span class="s1">JFrame{ 
+      
+    </span><span class="s0">private </span><span class="s1">JTextField userText</span><span class="s0">;</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">JTextArea chatWindow</span><span class="s0">;</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">ObjectOutputStream output</span><span class="s0">;</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">ObjectInputStream input</span><span class="s0">; </span><span class="s3">//from the server going into this computer</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">String message = </span><span class="s2">&quot;&quot;</span><span class="s0">;</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">String serverIP</span><span class="s0">; </span><span class="s3">//ip address of person you are talking to</span><span class="s1"> 
+    </span><span class="s0">private </span><span class="s1">Socket connection</span><span class="s0">;</span><span class="s1"> 
+    </span><span class="s3">//constructor, only able to connect to server</span><span class="s1"> 
+    </span><span class="s0">public </span><span class="s1">Client(String host) { 
+        </span><span class="s0">super</span><span class="s1">(</span><span class="s2">&quot;TCP chat application&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        serverIP = host</span><span class="s0">;</span><span class="s1"> 
+        userText = </span><span class="s0">new </span><span class="s1">JTextField()</span><span class="s0">;</span><span class="s1"> 
+        userText.setEditable(</span><span class="s0">false</span><span class="s1">)</span><span class="s0">;</span><span class="s3">//cannot type when not connected</span><span class="s1"> 
+        userText.addActionListener( 
+            </span><span class="s0">new </span><span class="s1">ActionListener(){ 
+                </span><span class="s0">public void </span><span class="s1">actionPerformed(ActionEvent event){ 
+                    sendMessage(event.getActionCommand())</span><span class="s0">;</span><span class="s1"> 
+                    userText.setText(</span><span class="s2">&quot;&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+                } 
+            } 
+        )</span><span class="s0">;</span><span class="s1"> 
+        add(userText</span><span class="s0">, </span><span class="s1">BorderLayout.SOUTH)</span><span class="s0">;</span><span class="s1"> 
+          
+        Font font = </span><span class="s0">new </span><span class="s1">Font(</span><span class="s2">&quot;Helvetica&quot;</span><span class="s0">, </span><span class="s1">Font.PLAIN</span><span class="s0">, </span><span class="s4">19</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        userText.setFont(font)</span><span class="s0">;</span><span class="s1">      
+          
+        chatWindow = </span><span class="s0">new </span><span class="s1">JTextArea()</span><span class="s0">;</span><span class="s1"> 
+        chatWindow.setFont(font)</span><span class="s0">;</span><span class="s1"> 
+        chatWindow.setEditable(</span><span class="s0">false</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        chatWindow.setLineWrap(</span><span class="s0">true</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        add(</span><span class="s0">new </span><span class="s1">JScrollPane(chatWindow)</span><span class="s0">, </span><span class="s1">BorderLayout.CENTER)</span><span class="s0">;</span><span class="s1"> 
+        setSize(</span><span class="s4">450</span><span class="s0">, </span><span class="s4">500</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        setVisible(</span><span class="s0">true</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+    } 
+     
+    </span><span class="s3">//connect to server </span><span class="s1"> 
+    </span><span class="s0">public void </span><span class="s1">startRunning() { 
+        </span><span class="s0">try</span><span class="s1">{ 
+            connectToServer()</span><span class="s0">;</span><span class="s3">//connecting to one specific computer</span><span class="s1"> 
+            setupStream()</span><span class="s0">;</span><span class="s1"> 
+            whileChatting()</span><span class="s0">;</span><span class="s1"> 
+        }</span><span class="s0">catch</span><span class="s1">(EOFException eofException){ 
+            showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2"> Client terminated connection&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        }</span><span class="s0">catch</span><span class="s1">(IOException ioException){ 
+            ioException.printStackTrace()</span><span class="s0">;</span><span class="s1"> 
+        }</span><span class="s0">finally</span><span class="s1">{ 
+            closeApp()</span><span class="s0">;</span><span class="s1"> 
+        } 
+    } 
+      
+    </span><span class="s3">//connect to server</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">connectToServer() </span><span class="s0">throws </span><span class="s1">IOException{ 
+        showMessage(</span><span class="s2">&quot;Attempting connection... </span><span class="s0">\n</span><span class="s2">&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        connection = </span><span class="s0">new </span><span class="s1">Socket(InetAddress.getByName(serverIP)</span><span class="s0">, </span><span class="s4">53793</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        showMessage(</span><span class="s2">&quot;Connected: &quot; </span><span class="s1">+ connection.getInetAddress().getHostName())</span><span class="s0">;</span><span class="s1"> 
+          
+    } 
+      
+    </span><span class="s3">//set up steams to send and receive messages</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">setupStream() </span><span class="s0">throws </span><span class="s1">IOException{ 
+        output = </span><span class="s0">new </span><span class="s1">ObjectOutputStream(connection.getOutputStream())</span><span class="s0">;</span><span class="s1"> 
+        output.flush()</span><span class="s0">;</span><span class="s1"> 
+        input = </span><span class="s0">new </span><span class="s1">ObjectInputStream(connection.getInputStream())</span><span class="s0">;</span><span class="s1"> 
+        showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">streams are setup </span><span class="s0">\n</span><span class="s2">&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+    } 
+    </span><span class="s3">//while chatting with server</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">whileChatting() </span><span class="s0">throws </span><span class="s1">IOException{ 
+        ableToType(</span><span class="s0">true</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        </span><span class="s0">do</span><span class="s1">{ 
+            </span><span class="s0">try</span><span class="s1">{ 
+                message = (String) input.readObject()</span><span class="s0">;</span><span class="s1"> 
+                showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">&quot; </span><span class="s1">+ message)</span><span class="s0">;</span><span class="s1"> 
+            }</span><span class="s0">catch</span><span class="s1">(ClassNotFoundException classNotFoundException){ 
+                showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2"> I don't know that object type&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+            } 
+        }</span><span class="s0">while</span><span class="s1">(!message.equals(</span><span class="s2">&quot;Server - END&quot;</span><span class="s1">))</span><span class="s0">;</span><span class="s1"> 
+    } 
+      
+    </span><span class="s0">private void </span><span class="s1">closeApp(){ 
+        showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2"> closing crap down...&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        ableToType(</span><span class="s0">false</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+          
+        </span><span class="s0">try</span><span class="s1">{ 
+            output.close()</span><span class="s0">;</span><span class="s1"> 
+            input.close()</span><span class="s0">;</span><span class="s1"> 
+            connection.close()</span><span class="s0">;</span><span class="s1"> 
+        }</span><span class="s0">catch</span><span class="s1">(IOException ioException){ 
+            ioException.printStackTrace()</span><span class="s0">;</span><span class="s1"> 
+        } 
+    } 
+    </span><span class="s3">//sends messages to server, passes to message parameter. displays on gui</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">sendMessage(String message){ 
+        </span><span class="s0">try</span><span class="s1">{ 
+            output.writeObject(</span><span class="s2">&quot;Client - &quot; </span><span class="s1">+ message)</span><span class="s0">;</span><span class="s1"> 
+            output.flush()</span><span class="s0">;</span><span class="s1"> 
+            showMessage(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">You - &quot; </span><span class="s1">+ message + </span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2">&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        }</span><span class="s0">catch</span><span class="s1">(IOException ioException){ 
+            chatWindow.append(</span><span class="s2">&quot;</span><span class="s0">\n</span><span class="s2"> something messed up sending message!&quot;</span><span class="s1">)</span><span class="s0">;</span><span class="s1"> 
+        } 
+    } 
+    </span><span class="s3">//change/update chat window</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">showMessage(</span><span class="s0">final </span><span class="s1">String m){ 
+        SwingUtilities.invokeLater( 
+                </span><span class="s0">new </span><span class="s1">Runnable(){ 
+                    </span><span class="s0">public void </span><span class="s1">run(){ 
+                        chatWindow.append(m)</span><span class="s0">;</span><span class="s1"> 
+                    } 
+                } 
+        )</span><span class="s0">;</span><span class="s1"> 
+    } 
+      
+    </span><span class="s3">//gives user permission to type into the text body</span><span class="s1"> 
+    </span><span class="s0">private void </span><span class="s1">ableToType(</span><span class="s0">final boolean </span><span class="s1">tof){ 
+        SwingUtilities.invokeLater( 
+            </span><span class="s0">new </span><span class="s1">Runnable() { 
+                </span><span class="s0">public void </span><span class="s1">run(){ 
+                    userText.setEditable(tof)</span><span class="s0">;</span><span class="s1"> 
+                } 
+            } 
+        )</span><span class="s0">;</span><span class="s1"> 
+    } 
+}</span></pre>
+</body>
+</html>
